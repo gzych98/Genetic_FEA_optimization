@@ -6,6 +6,23 @@ from matplotlib.animation import FuncAnimation
 
 # Definicja klasy Osobnik
 class Osobnik:
+    """
+    Reprezentacja osobnika w algorytmie genetycznym.
+
+    Atrybuty:
+        young (float): Moduł Younga materiału.
+        poisson (float): Liczba Poissona materiału.
+        dopasowanie (float): Wartość dopasowania osobnika, obliczana na podstawie korelacji Pearsona.
+        dopasowanie_Y (float): Dopasowanie modułu Younga.
+        dopasowanie_v (float): Dopasowanie liczby Poissona.
+
+    Metody:
+        __init__(self, young, poisson): Inicjalizacja nowego osobnika z określonymi parametrami.
+        __str__(self): Reprezentacja tekstowa osobnika.
+        oblicz_dopasowanie(self, result_solver, result_measurement): Oblicza dopasowanie osobnika na podstawie wyników solvera i pomiarów.
+        oblicz_dopasowanie_TEST(self, idealny_Y, idealny_v): Oblicza dopasowanie osobnika do idealnych wartości modułu Younga i liczby Poissona.
+    """
+
     def __init__(self, young, poisson):
         self.young = young
         self.poisson = poisson
@@ -29,6 +46,12 @@ class Osobnik:
     
 # Funkcja generująca losowe wartości
 def init_random():
+    """
+    Generuje losowe wartości modułu Younga i liczby Poissona dla nowego osobnika.
+
+    Zwraca:
+        Tuple[float, float]: Para wartości (moduł Younga, liczba Poissona).
+    """
     young_max = 300e6
     poisson_max = 0.5
     initial_v = (np.random.rand() - 0.5) * 2 * poisson_max
@@ -38,6 +61,16 @@ def init_random():
 
 
 def selekcja(populacja, procent_najlepszych=50):
+    """
+    Wybiera najlepsze osobniki z populacji na podstawie ich dopasowania.
+
+    Parametry:
+        populacja (list[Osobnik]): Lista osobników do selekcji.
+        procent_najlepszych (int): Procent najlepszych osobników do wybrania.
+
+    Zwraca:
+        list[Osobnik]: Lista najlepszych osobników z populacji.
+    """
     # Sortowanie populacji według dopasowania od najlepszego do najgorszego
     posortowana_populacja = sorted(populacja, key=lambda osobnik: osobnik.dopasowanie, reverse=True)
     
@@ -48,6 +81,16 @@ def selekcja(populacja, procent_najlepszych=50):
     return posortowana_populacja[:liczba_do_wyboru]
 
 def krzyzowanie(populacja, liczba_potomkow):
+    """
+    Tworzy nową populację poprzez krzyżowanie osobników z danej populacji.
+
+    Parametry:
+        populacja (list[Osobnik]): Lista osobników do krzyżowania.
+        liczba_potomkow (int): Liczba potomków do wygenerowania.
+
+    Zwraca:
+        list[Osobnik]: Nowa populacja potomków.
+    """
     nowa_populacja=[]
     while len(nowa_populacja) < liczba_potomkow:
         parent1,parent2 = random.sample(populacja,2) # losowo wybieracm dwóch rodziców
@@ -57,6 +100,16 @@ def krzyzowanie(populacja, liczba_potomkow):
     return nowa_populacja
 
 def mutacja(populacja, coeff=0.1):
+    """
+    Aplikuje mutacje do osobników w populacji z określonym współczynnikiem mutacji.
+
+    Parametry:
+        populacja (list[Osobnik]): Lista osobników do mutacji.
+        coeff (float): Współczynnik mutacji określający intensywność zmian.
+
+    Zwraca:
+        list[Osobnik]: Populacja po mutacji.
+    """
     young_max = 300e6
     poisson_max = 0.5
     for osobnik in populacja:
@@ -68,42 +121,6 @@ def mutacja(populacja, coeff=0.1):
             osobnik.poisson = min(max(osobnik.poisson, -poisson_max), poisson_max)
     return populacja
 
-
-# Funkcja do tworzenia animacji punktowej
-def tworzenie_animacji_scatter(populacja, idealny_Y, idealny_v, max_generacji):
-    fig, ax = plt.subplots()
-    ax.set_xlim(0, 300e6)  # Zakres dla Young
-    ax.set_ylim(-0.5, 0.5)  # Zakres dla Poisson
-
-    scatter = ax.scatter([], [], s=50, c='b', marker='o')
-
-    xdata, ydata = [], []  # Przenieś deklaracje poza funkcję init
-
-    def init():
-        scatter.set_offsets([])
-        return scatter,
-
-    def update(frame):
-        for osobnik in populacja:
-            osobnik.oblicz_dopasowanie_TEST(idealny_Y, idealny_v)
-        selekcjonowane = selekcja(populacja)
-        populacja = krzyzowanie(selekcjonowane, initial_size)
-        populacja = mutacja(populacja)
-
-        # Aktualizacja danych na wykresie scatter plot
-        xdata.clear()  # Wyczyść dane przed aktualizacją
-        ydata.clear()
-        for osobnik in populacja:
-            xdata.append(osobnik.young)
-            ydata.append(osobnik.poisson)
-        scatter.set_offsets(np.c_[xdata, ydata])
-
-        return scatter,
-
-    ani = FuncAnimation(fig, update, frames=range(max_generacji), init_func=init, blit=True)
-    plt.xlabel('Young')
-    plt.ylabel('Poisson')
-    plt.show()
 
 if __name__ == "__main__":
     # Tworzenie początkowej populacji
