@@ -14,7 +14,8 @@ Projekt implementuje algorytm genetyczny służący do optymalizacji właściwo�
 ## Instalacja
 
 Aby uruchomić projekt, należy zainstalować wymagane biblioteki używając polecenia:
-'''
+
+'''bash
 pip install numpy scipy matplotlib
 '''
 
