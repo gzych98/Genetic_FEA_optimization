@@ -9,7 +9,7 @@ IP = 'rp-f0ad96.local'        # 'rp-f066c8.local'
 rp_s = scpi.scpi(IP)
 
 wave_form = 'sine'
-freq = 1000000
+freq = 200e3
 ampl = 1
 
 period = 1 # [s]
