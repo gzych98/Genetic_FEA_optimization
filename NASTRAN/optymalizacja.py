@@ -2,12 +2,24 @@ import optuna
 from genetic_nastran import algorytm
 
 def objective(trial):
-    coeff = trial.suggest_uniform('coeff', 0.1, 1.0)  # Przykład hiperparametru
-    # Tutaj uruchom swój algorytm genetyczny z danym coeff i zwróć wynik jako wartość do optymalizacji
-    wynik = algorytm(coeff)
+    # Zdefiniuj zakres poszukiwań dla F i CR
+    F = trial.suggest_uniform('F', 0.5, 1.5)
+    CR = trial.suggest_uniform('CR', 0.1, 1.0)
+
+    # Tutaj uruchamiamy algorytm ewolucji różnicowej z wybranymi wartościami F i CR
+    # Zakładamy, że funkcja `algorytm` zwraca jakąś miarę jakości rozwiązania, np. odwrotność błędu
+    # Możesz dostosować tę funkcję do swoich potrzeb
+    wynik = algorytm(F, CR)
+
     return wynik
 
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=100)
+def algorytm(F, CR):
+    # Tutaj wprowadź logikę Twojego algorytmu ewolucji różnicowej
+    # Użyj F i CR jako parametrów dla mutacji i rekombinacji
+    # Na koniec zwróć miarę jakości najlepszego znalezionego rozwiązania (np. odwrotność błędu)
+    # Dla celów demonstracyjnych zwracam losowy wynik
+    import random
+    return random.uniform(0, 1)  # Zastąp to rzeczywistym wynikiem Twojego algorytmu
 
-print(study.best_params)
+# Utworzenie obiektu study Optuna i przeprowadzenie optymalizacji
+study = opt
