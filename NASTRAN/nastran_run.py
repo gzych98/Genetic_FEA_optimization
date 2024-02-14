@@ -1,6 +1,7 @@
 #run Nastran input
 #D:\NASTRAN\Nastran\bin\nastran.exe "C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\01_MECHANIKA\02_NASTRAN\01_TESTY\A5_Static Structural.bdf" out="C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\01_MECHANIKA\02_NASTRAN\01_TESTY\result_test"
 from edit_material_prop import edit_file
+import os
 
 def run_nastran_solver(input_file, outupt_path, params, solver_path = r'D:\NASTRAN\Nastran\bin\nastran.exe'):
     ...
@@ -11,7 +12,9 @@ import subprocess
 
 def run_solver_and_extract_frequencies(solver_path, input_file,eigenmodes = 6):
     # Uruchomienie solvera i oczekiwanie na zakończenie procesu
-    out = 'out= C:\\Users\\Grzesiek\\Desktop\\Doktorat\\00_PROJEKT_BADAWCZY\\01_MECHANIKA\\02_NASTRAN\\02_MODAL_TEST\\do_skryptu'
+    out_path = os.path.dirname(input_file)
+    # out = 'out= C:\\Users\\Grzesiek\\Desktop\\Doktorat\\00_PROJEKT_BADAWCZY\\01_MECHANIKA\\02_NASTRAN\\02_MODAL_TEST\\do_skryptu'
+    out = f'out= {out_path}'
     old = 'old=No'
     subprocess.run([solver_path, input_file, out, old ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     

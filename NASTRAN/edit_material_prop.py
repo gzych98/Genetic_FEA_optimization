@@ -1,4 +1,5 @@
 import unittest
+import os
 
 def modify_material_properties(line, params):
     '''
@@ -42,6 +43,15 @@ def modify_material_properties(line, params):
 
 
 def edit_file(file_path, params):
+    '''
+    Replace material properties inside .bdf Nastran file:
+    file_path (string): file to be used as template
+    params (dictionary): new material data 
+
+    Example:
+    
+    params = {'E': '2.100+11', 'NU' : 0.25}
+    '''
     with open(file_path, 'r') as f:
         lines = f.readlines()
 
@@ -50,12 +60,40 @@ def edit_file(file_path, params):
             new_props = modify_material_properties(line,params)
             lines[i] = new_props + '\n'
             break
-    new_file = f'{file_path.rstrip('.bdf')}_{params['E']}_{params['NU']}.bdf'
+    dir_path = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path)
+    new_file = f'{dir_path}/genetic/{file_name.rstrip('.bdf')}_{params['E']}_{params['NU']}.bdf'
     with open(new_file, 'w') as file:
         file.writelines(lines)
 
     return new_file
-        
+
+
+def format_scientific(value, total_length=8):
+    # Zakładamy, że potrzebujemy przynajmniej 1 cyfrę przed kropką, kropkę oraz 'e' i znak wykładnika
+    base_length = 4  # Dla 'e±'
+    min_exponent_length = 2  # Minimalna długość wykładnika, np. 'e+01'
+    
+    # Obliczanie maksymalnej precyzji dla mantysy
+    precision = total_length - base_length - min_exponent_length - 1  # 1 dla cyfry przed kropką
+    
+    if precision < 0:
+        raise ValueError("Założona długość całkowita jest zbyt mała, aby pomieścić notację naukową.")
+    
+    # Formatowanie wartości
+    formatted = f"{value:.{precision}e}"
+    
+    # Dodatkowa weryfikacja i dostosowanie, jeśli wykładnik jest większy niż oczekiwano
+    exponent_part = formatted.split('e')[-1]
+    if len(exponent_part) > min_exponent_length:
+        extra_length = len(exponent_part) - min_exponent_length
+        precision -= extra_length
+        formatted = f"{value:.{precision}e}"
+    
+    return formatted
+
+
+     
         
     
 
@@ -69,8 +107,15 @@ class TestExtractMaterialProperties(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    #unittest.main()
-    path = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\01_MECHANIKA\02_NASTRAN\02_MODAL_TEST\do_skryptu.bdf"
-    params = {'E': '2.100+11', 'NU' : 0.25}
-    new = edit_file(path,params)
-    print(new)
+    # #unittest.main()
+    # path = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\01_MECHANIKA\02_NASTRAN\02_MODAL_TEST\do_skryptu.bdf"
+    # params = {'E': '2.100+11', 'NU' : 0.25}
+    # new = edit_file(path,params)
+    # print(new)
+
+    try:
+        value = 2.10000e+11
+        formatted_value = format_scientific(value, 8)
+        print(len(formatted_value))
+    except ValueError as e:
+        print(e)
