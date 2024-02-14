@@ -253,7 +253,7 @@ def selekcja(populacja, nowa_populacja):
         if nowa_populacja[i].dopasowanie > populacja[i].dopasowanie:
             populacja[i] = nowa_populacja[i]
     
-def algorytm(F, CR):
+def algorytm(F, CR, solver_path, template, initial_size=20):
     # Ścieżka do folderu, który chcesz wyczyścić
     folder_do_wyczyszczenia = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\genetic"
 
@@ -278,15 +278,10 @@ def algorytm(F, CR):
     # Formatowanie i wyświetlanie czasu startu
     formatted_time_start = time_start.strftime("%Y-%m-%d %H:%M:%S")
     print(f'CZAS STARTU:\t{formatted_time_start}')
+    
 
-    # Zmienne systemowe
-    solver_path = r'D:\NASTRAN\Nastran\bin\nastran.exe'  # Ścieżka do pliku wykonywalnego solvera
-    template = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\nastran_modal.bdf"  # Ścieżka do pliku wejściowego
-
-    # Tworzenie początkowej populacji
-    initial_size = 20
-    populacja = [Osobnik(*init_random(template)) for _ in range(initial_size)]
-    # NOWE - wygeneruj initial_size par liczby NU i E
+    # Tworzenie początkowej populacji    
+    populacja = [Osobnik(*init_random(template)) for _ in range(initial_size)]   
 
     
     # DEFINIOWANIE IDEALNEGO WYNIKU
@@ -397,5 +392,9 @@ def algorytm(F, CR):
 if __name__ == "__main__":
     F = 0.8 # współczynnik mutacji
     CR = 0.8 # współczynnik rekombinacji
-    algorytm(F, CR)
+    initial_size=20
+    solver_path = r'D:\NASTRAN\Nastran\bin\nastran.exe'
+    template = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\nastran_modal.bdf"
+    najlepsze_dopasowanie = algorytm(F, CR, solver_path, template, initial_size)
+    print(f'Wynik analizy: {najlepsze_dopasowanie}')
     
