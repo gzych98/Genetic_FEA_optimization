@@ -111,7 +111,7 @@ def init_random(template):
     return (initial_Y, initial_v, file_path)
 
 
-def selekcja(populacja, procent_najlepszych=40):
+def selekcja2(populacja, procent_najlepszych=40):
     """
     Wybiera najlepsze osobniki z populacji na podstawie ich dopasowania.
 
