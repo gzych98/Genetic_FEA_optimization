@@ -283,6 +283,10 @@ def algorytm(F, CR, solver_path, template, initial_size):
     F_increment = 0.1  # Wartość o którą zwiększamy F
     CR_increment = 0.1  # Wartość o którą zwiększamy CR
     threshold = 0.01  # Próg dla różnicy w dopasowaniu, poniżej którego uznajemy, że algorytm wpadł w minimum lokalne
+    # Ustawienia dla dekrementacji
+    F_decrement = 0.05  # Wartość o którą zmniejszamy F
+    CR_decrement = 0.05  # Wartość o którą zmniejszamy CR
+    large_difference_threshold = 0.1  # Próg dla "dużej" różnicy w dopasowaniu
     najlepsze_dopasowanie_w_poprzedniej_generacji = None
 
     # Tworzenie początkowej populacji    
@@ -352,7 +356,7 @@ def algorytm(F, CR, solver_path, template, initial_size):
         # Oblicz najlepsze dopasowanie w obecnej generacji
         obecne_najlepsze_dopasowanie = max(osobnik.dopasowanie for osobnik in populacja)
         
-        # Sprawdź, czy wpadliśmy w minimum lokalne
+        # Sprawdź, czy różnica w dopasowaniu jest duża
         if najlepsze_dopasowanie_w_poprzedniej_generacji is not None:
             roznica_dopasowania = obecne_najlepsze_dopasowanie - najlepsze_dopasowanie_w_poprzedniej_generacji
             if roznica_dopasowania < threshold:
@@ -360,6 +364,11 @@ def algorytm(F, CR, solver_path, template, initial_size):
                 F += F_increment
                 CR += CR_increment
                 print(f"Zwiększono F do {F} i CR do {CR} aby wyjść z minimum lokalnego.")
+            elif roznica_dopasowania >= large_difference_threshold:
+                # Zmniejsz F i CR, jeśli algorytm jest blisko optymalnego rozwiązania
+                F = max(F - F_decrement, 0.1)  # Ustaw dolny limit, aby nie zmniejszyć zbyt mocno
+                CR = max(CR - CR_decrement, 0.1)
+                print(f"Zmniejszono F do {F} i CR do {CR} aby skupić się na eksploatacji.")
         
         najlepsze_dopasowanie_w_poprzedniej_generacji = obecne_najlepsze_dopasowanie
 
