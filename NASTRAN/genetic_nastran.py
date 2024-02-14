@@ -278,7 +278,12 @@ def algorytm(F, CR, solver_path, template, initial_size=20):
     # Formatowanie i wyświetlanie czasu startu
     formatted_time_start = time_start.strftime("%Y-%m-%d %H:%M:%S")
     print(f'CZAS STARTU:\t{formatted_time_start}')
-    
+
+    # USTAWIENIA POCZĄTKOWE
+    F_increment = 0.1  # Wartość o którą zwiększamy F
+    CR_increment = 0.1  # Wartość o którą zwiększamy CR
+    threshold = 0.01  # Próg dla różnicy w dopasowaniu, poniżej którego uznajemy, że algorytm wpadł w minimum lokalne
+    najlepsze_dopasowanie_w_poprzedniej_generacji = None
 
     # Tworzenie początkowej populacji    
     populacja = [Osobnik(*init_random(template)) for _ in range(initial_size)]   
@@ -318,7 +323,7 @@ def algorytm(F, CR, solver_path, template, initial_size=20):
     if not os.path.exists(folder_obrazy):
         os.makedirs(folder_obrazy)
 
-
+        
     while liczba_generacji < max_generacji:
         x = []
         y = []
@@ -343,6 +348,20 @@ def algorytm(F, CR, solver_path, template, initial_size=20):
         
         # Selekcja
         populacja = selekcja(populacja, rekombinowana_populacja)
+
+        # Oblicz najlepsze dopasowanie w obecnej generacji
+        obecne_najlepsze_dopasowanie = max(osobnik.dopasowanie for osobnik in populacja)
+        
+        # Sprawdź, czy wpadliśmy w minimum lokalne
+        if najlepsze_dopasowanie_w_poprzedniej_generacji is not None:
+            roznica_dopasowania = obecne_najlepsze_dopasowanie - najlepsze_dopasowanie_w_poprzedniej_generacji
+            if roznica_dopasowania < threshold:
+                # Zwiększ F i CR, jeśli algorytm wpadł w minimum lokalne
+                F += F_increment
+                CR += CR_increment
+                print(f"Zwiększono F do {F} i CR do {CR} aby wyjść z minimum lokalnego.")
+        
+        najlepsze_dopasowanie_w_poprzedniej_generacji = obecne_najlepsze_dopasowanie
 
 
         # Sprawdzenie, czy któryś z osobników osiągnął pożądane dopasowanie
@@ -390,8 +409,8 @@ def algorytm(F, CR, solver_path, template, initial_size=20):
 
 
 if __name__ == "__main__":
-    F = 0.8 # współczynnik mutacji
-    CR = 0.8 # współczynnik rekombinacji
+    F = 0.5 # współczynnik mutacji
+    CR = 0.5 # współczynnik rekombinacji
     initial_size=20
     solver_path = r'D:\NASTRAN\Nastran\bin\nastran.exe'
     template = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\nastran_modal.bdf"
