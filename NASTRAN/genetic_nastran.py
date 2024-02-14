@@ -174,7 +174,7 @@ def krzyzowanie_z_naciskiem(populacja, liczba_potomkow,template):
         
     return nowa_populacja
 
-def mutacja(populacja, template, coeff=0.6 ):
+def mutacja2(populacja, template, coeff=0.6 ):
     """
     Aplikuje mutacje do osobników w populacji z określonym współczynnikiem mutacji.
 
@@ -197,8 +197,63 @@ def mutacja(populacja, template, coeff=0.6 ):
             params = {'E': convert_number_to_nastran(osobnik.young), 'NU': osobnik.poisson}
             osobnik.file_path = edit_file(template, params)
     return populacja
+###################################################
+# Differential Evolution
+###################################################
+def mutacja(populacja, template, F):
+    """
+    W ER mutacja polega na wybraniu trzech różnych wektorów a, b, c z populacji dla każdego targetowego wektora
+    x, a następnie utworzeniu wektora mutantu v za pomocą formuły: v = a + F * (b - c), gdzie F jest współczynnikiem mutacji,
+    zazwyczaj w przedziale [0.5, 2.0].
+    """
+    N = len(populacja)
+    nowa_populacja = []
+    for i in range(N):
+        idxs = [idx for idx in range(N) if idx != i]
+        a, b, c = np.random.choice(idxs, 3, replace=False)
+        mutant_young = populacja[a].young + F * (populacja[b].young - populacja[c].young)
+        mutant_poisson = populacja[a].poisson + F * (populacja[b].poisson - populacja[c].poisson)
+        
+        # Zapewnienie, że wartości są w akceptowalnych zakresach
+        mutant_young = np.clip(mutant_young, 1e7, 300e9)
+        mutant_poisson = np.clip(mutant_poisson, 0, 0.5-1/1000)
+        
+        # Utworzenie nowego osobnika z mutowanymi wartościami
+        params = {'E': convert_number_to_nastran(mutant_young), 'NU': mutant_poisson}
+        file_path = edit_file(template, params)
+        nowa_populacja.append(Osobnik(mutant_young, mutant_poisson, file_path))
+        
+    return nowa_populacja
 
-def algorytm(coeff):
+def rekombinacja(target, mutant, CR, template):
+    """
+    W każdej iteracji dla każdego osobnika w populacji wykonujemy rekombinację, aby utworzyć nowego osobnika
+    testowego, mieszając atrybuty osobnika mutantu z oryginalnym osobnikiem. Stosuje się losowy lub stały
+    współczynnik krzyżowania CR [0, 1] do decydowania, które atrybuty są dziedziczone od mutantu.
+    """
+    # Tworzenie nowego osobnika z atrybutami pochodzącymi z mutanta lub targetu
+    new_young = mutant.young if random.random() < CR else target.young
+    new_poisson = mutant.poisson if random.random() < CR else target.poisson
+    
+    # Utworzenie nowego osobnika z połączonych cech
+    params = {'E': convert_number_to_nastran(new_young), 'NU': new_poisson}
+    file_path = edit_file(template, params)
+    new_osobnik = Osobnik(new_young, new_poisson, file_path)
+    
+    return new_osobnik
+
+def selekcja(populacja, nowa_populacja):
+    """
+    Porównujemy nowego osobnika z oryginalnym osobnikiem w populacji. Jeśli nowy osobnik ma lepsze 
+    dopasowanie, zastępuje oryginalnego osobnika w populacji.
+    """
+    for i in range(len(populacja)):
+        # Zakładam, że funkcja oblicz_dopasowanie jest już zaimplementowana w klasie Osobnik
+        # i zwraca wartość dopasowania bezpośrednio z atrybutu osobnika
+        if nowa_populacja[i].dopasowanie > populacja[i].dopasowanie:
+            populacja[i] = nowa_populacja[i]
+    
+def algorytm(F, CR):
     # Ścieżka do folderu, który chcesz wyczyścić
     folder_do_wyczyszczenia = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\genetic"
 
@@ -270,7 +325,6 @@ def algorytm(coeff):
 
 
     while liczba_generacji < max_generacji:
-        # NARYSUJ
         x = []
         y = []
                 
@@ -283,41 +337,37 @@ def algorytm(coeff):
             osobnik.oblicz_dopasowanie(idealny_FREQ)
             print(f'DOPASOWANIE:\t{osobnik}')
         
+        # Mutacja i rekombinacja
+        mutowana_populacja = mutacja(populacja, template, F)
+        rekombinowana_populacja = [rekombinacja(populacja[i], mutowana_populacja[i], CR, template) for i in range(len(populacja))]
+        
+        # Ponowne obliczenie dopasowania dla rekombinowanych osobników
+        for osobnik in rekombinowana_populacja:
+            osobnik.solve_file(solver_path)
+            osobnik.oblicz_dopasowanie(idealny_FREQ)
+        
+        # Selekcja
+        populacja = selekcja(populacja, rekombinowana_populacja)
 
-        fig, ax = plt.subplots()
-        ax.set_xlim(0, 300e9)  # Zakres dla Young
-        ax.set_ylim(-0.5, 0.5)  # Zakres dla Poisson
-
-        scatter = ax.scatter(x, y, s=50, c='b', marker='o')
-        scatter = ax.scatter(idealny_Y, idealny_v, s=50, c='r', marker='o')
-        plt.draw()
-
-        plt.pause(1)
-        xdata, ydata = [], []  # Przenieś deklaracje poza funkcję init 
 
         # Sprawdzenie, czy któryś z osobników osiągnął pożądane dopasowanie
         if any(osobnik.dopasowanie >= idealne_dopasowanie for osobnik in populacja):
             print("Osiągnięto pożądane dopasowanie!")
-            break
+            break        
 
-        # Selekcja najlepszych osobników
-        selekcjonowane = selekcja(populacja)
-
-        # Krzyżowanie wybranych osobników, aby stworzyć nową populację
-        populacja = krzyzowanie_z_naciskiem(selekcjonowane, initial_size, template)
-
-        # Mutacja
-        populacja = mutacja(populacja, template, coeff)
-
-        # Tutaj dodajemy zapis do pliku
+        # Zapis do pliku        
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, 300e9)  # Zakres dla Young
+        ax.set_ylim(-0.5, 0.5)  # Zakres dla Poisson
+        scatter = ax.scatter(x, y, s=50, c='b', marker='o')
+        scatter = ax.scatter(idealny_Y, idealny_v, s=50, c='r', marker='o')
+        plt.draw()
         nazwa_pliku = f"obraz_{liczba_generacji}.png"  # Unikalna nazwa pliku dla każdej generacji
         sciezka_zapisu = os.path.join(folder_obrazy, nazwa_pliku)
         plt.savefig(sciezka_zapisu)  # Zapisz obraz do pliku
         plt.close()  # Zamknij figurę po zapisaniu, aby uniknąć wyświetlania
 
-        liczba_generacji += 1
-
-        
+        liczba_generacji += 1        
 
         print(f"Generacja {liczba_generacji} zakończona. Najlepszy osobnik {selekcjonowane[0].dopasowanie} ({selekcjonowane[0].young/1e9:7.3f} GPa, {selekcjonowane[0].poisson:.3f})")
         
@@ -345,5 +395,7 @@ def algorytm(coeff):
 
 
 if __name__ == "__main__":
-    algorytm(0.1)
+    F = 0.8 # współczynnik mutacji
+    CR = 0.8 # współczynnik rekombinacji
+    algorytm(F, CR)
     
