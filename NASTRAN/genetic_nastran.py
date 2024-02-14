@@ -253,7 +253,7 @@ def selekcja(populacja, nowa_populacja):
         if nowa_populacja[i].dopasowanie > populacja[i].dopasowanie:
             populacja[i] = nowa_populacja[i]
     
-def algorytm(F, CR, solver_path, template, initial_size=20):
+def algorytm(F, CR, solver_path, template, initial_size):
     # Ścieżka do folderu, który chcesz wyczyścić
     folder_do_wyczyszczenia = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\genetic"
 
