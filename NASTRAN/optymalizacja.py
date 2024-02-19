@@ -5,21 +5,23 @@ def objective(trial):
     # Zdefiniuj zakres poszukiwań dla F i CR
     F = trial.suggest_uniform('F', 0.5, 1.5)
     CR = trial.suggest_uniform('CR', 0.1, 1.0)
+    initial_size=50
+    solver_path = r'D:\NASTRAN\Nastran\bin\nastran.exe'
+    template = r"C:\Users\Grzesiek\Desktop\Doktorat\00_PROJEKT_BADAWCZY\02_SOFTWARE\NASTRAN_INPUT\nastran_modal.bdf"
+    
 
     # Tutaj uruchamiamy algorytm ewolucji różnicowej z wybranymi wartościami F i CR
     # Zakładamy, że funkcja `algorytm` zwraca jakąś miarę jakości rozwiązania, np. odwrotność błędu
     # Możesz dostosować tę funkcję do swoich potrzeb
-    wynik = algorytm(F, CR)
+    wynik = algorytm(F, CR, solver_path, template, initial_size)
 
     return wynik
 
-def algorytm(F, CR):
-    # Tutaj wprowadź logikę Twojego algorytmu ewolucji różnicowej
-    # Użyj F i CR jako parametrów dla mutacji i rekombinacji
-    # Na koniec zwróć miarę jakości najlepszego znalezionego rozwiązania (np. odwrotność błędu)
-    # Dla celów demonstracyjnych zwracam losowy wynik
-    import random
-    return random.uniform(0, 1)  # Zastąp to rzeczywistym wynikiem Twojego algorytmu
+
 
 # Utworzenie obiektu study Optuna i przeprowadzenie optymalizacji
-study = opt
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=100)
+
+print(f"Najlepsze parametry: {study.best_params}")
+print(f"Najlepsze dopasowanie: {1 / study.best_value}")
